@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
+import CategoryFlow from '@/components/CategoryFlow';
 import ProductGrid from '@/components/ProductGrid';
 import StorySection from '@/components/StorySection';
 import Footer from '@/components/Footer';
@@ -29,6 +30,7 @@ export default function Home() {
         transition={{ duration: 0.8 }}
       >
         <Hero />
+        <CategoryFlow />
         <ProductGrid />
 
         {/* Immersive Gallery Section */}
