@@ -1,192 +1,203 @@
 'use client';
 
-import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
-import Image from 'next/image';
-import { useRef, useEffect, useState } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { useRef } from 'react';
 
-const features = [
+const storySteps = [
   {
-    id: 1,
-    title: "Sourced from Origin",
-    description: "We travel to the remotest parts of India to find the finest quality whole spices directly from farmers.",
-    image: "https://picsum.photos/seed/origin/800/600"
+    title: "The Heritage",
+    subtitle: "Rooted in Tradition",
+    description: "HD Foods & Masale started with a simple vision: to bring the authentic, ground-at-home taste of Indian spices to every kitchen. Our journey began with a single mission of purity.",
+    part: "H"
   },
   {
-    id: 2,
-    title: "Traditional Grinding",
-    description: "Our spices are ground at low temperatures to preserve their natural oils and intense aroma.",
-    image: "https://picsum.photos/seed/grinding/800/600"
+    title: "Dedication",
+    subtitle: "Purity in Every Grain",
+    description: "Our dedication to quality drives us to source directly from the richest spice-growing regions. We ensure that every 'D' in our story stands for double the dedication to your health.",
+    part: "D"
   },
   {
-    id: 3,
-    title: "Purity Guaranteed",
-    description: "Every batch undergoes rigorous quality checks to ensure zero adulteration and maximum potency.",
-    image: "https://picsum.photos/seed/purity/800/600"
+    title: "The Legacy",
+    subtitle: "A Complete Experience",
+    description: "Today, the complete HD Foods logo represents a gold standard in the spice industry. From turmeric to exotic blends, we complete your culinary journey with perfection.",
+    part: "Full"
   }
 ];
 
-function Counter({ value, suffix = "" }: { value: number, suffix?: string }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    if (isInView) {
-      let start = 0;
-      const end = value;
-      const duration = 2000;
-      let startTimestamp: number | null = null;
-
-      const step = (timestamp: number) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        setDisplayValue(Math.floor(progress * (end - start) + start));
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        }
-      };
-      window.requestAnimationFrame(step);
-    }
-  }, [isInView, value]);
-
-  return <span ref={ref}>{displayValue}{suffix}</span>;
-}
-
 export default function StorySection() {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start end", "end start"]
+    offset: ["start start", "end end"]
   });
 
-  const rotate = useTransform(scrollYProgress, [0, 1], [-5, 5]);
+  // Smooth out the scroll progress but keep it responsive
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.0001
+  });
+
+  // Animation Thresholds (Balanced Steps)
+  // Step 1: 0.0 -> 0.33 (Read Heritage)
+  // Step 2: 0.33 -> 0.66 (See Dedication)
+  // Step 3: 0.66 -> 1.0 (Final Logo)
+
+  // SVG Part Animations - H is ALWAYS visible once section starts
+  const hOpacity = 1;
+  const dOpacity = useTransform(smoothProgress, [0.33, 0.45], [0, 1]);
+  const circleOpacity = useTransform(smoothProgress, [0.66, 0.76], [0, 1]);
+  const circleScale = useTransform(smoothProgress, [0.66, 0.8], [0.7, 1]);
+
+  // Text Animations
+  // Text 1: Visible from start, fades out after 0.33
+  const text1Opacity = useTransform(smoothProgress, [0.33, 0.38], [1, 0]);
+  const text1Y = useTransform(smoothProgress, [0.33, 0.38], [0, -40]);
+
+  // Text 2: Fades in after 0.33, fades out after 0.66
+  const text2Opacity = useTransform(smoothProgress, [0.33, 0.38, 0.66, 0.71], [0, 1, 1, 0]);
+  const text2Y = useTransform(smoothProgress, [0.33, 0.38, 0.66, 0.71], [40, 0, 0, -40]);
+
+  // Text 3: Fades in after 0.66
+  const text3Opacity = useTransform(smoothProgress, [0.66, 0.71], [0, 1]);
+  const text3Y = useTransform(smoothProgress, [0.66, 0.71], [40, 0]);
 
   return (
-    <section id="our-story" ref={containerRef} className="py-32 bg-stone-50 overflow-hidden relative">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center mb-40">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            <motion.span
-              initial={{ opacity: 0, letterSpacing: "0.2em" }}
-              whileInView={{ opacity: 1, letterSpacing: "0.3em" }}
-              className="text-red-600 font-black uppercase text-xs mb-6 block"
-            >
-              Our Legacy
-            </motion.span>
+    <div id="our-story" ref={containerRef} className="relative h-[300vh] bg-stone-50">
 
-            <h2 className="text-6xl md:text-7xl font-serif text-stone-900 leading-[1.1] mb-10 text-balance">
-              A Journey of Taste <br />
-              <span className="italic text-red-600 font-light">Since 1995</span>
-            </h2>
+      {/* Single Sticky Wrapper to prevent empty scroll space */}
+      <div className="sticky top-0 h-screen w-full flex items-center overflow-hidden">
 
-            <p className="text-xl text-stone-600 leading-relaxed mb-8 font-medium">
-              HD Foods & Masale was born out of a passion for authentic Indian flavors. For over two decades, we have been committed to bringing the purest spices from the farm to your table.
-            </p>
+        {/* Sticky Background Decorative */}
+        <motion.div
+          style={{ opacity: useTransform(smoothProgress, [0, 1], [0.03, 0.1]) }}
+          className="absolute inset-0 flex items-center justify-center text-[30vw] font-serif font-black text-stone-900 select-none pointer-events-none"
+        >
+          STORY
+        </motion.div>
 
-            <p className="text-xl text-stone-500 leading-relaxed mb-12">
-              Our process is rooted in tradition but powered by modern technology, ensuring that every pinch of our masala adds a burst of life to your cooking.
-            </p>
+        {/* Main Content */}
+        <div className="mx-auto max-w-7xl w-full px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
 
-            <div className="grid grid-cols-2 gap-12">
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100 group">
-                <span className="block text-5xl font-serif font-bold text-red-600 mb-3 tracking-tighter">
-                  <Counter value={25} suffix="+" />
-                </span>
-                <span className="text-xs uppercase tracking-[0.2em] text-stone-400 font-black">Years of Trust</span>
-              </div>
-              <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-100 group">
-                <span className="block text-5xl font-serif font-bold text-red-600 mb-3 tracking-tighter">
-                  <Counter value={100} suffix="%" />
-                </span>
-                <span className="text-xs uppercase tracking-[0.2em] text-stone-400 font-black">Natural Ingredients</span>
+          {/* Left Side: Animated SVG Logo */}
+          <div className="flex justify-center items-center h-[400px] md:h-[600px]">
+            <div className="relative w-full max-w-[420px] aspect-square flex items-center justify-center">
+
+              {/* The SVG Logo Building Up */}
+              <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl overflow-visible">
+                {/* Background Circle / Ring */}
+                <motion.g style={{ opacity: circleOpacity, scale: circleScale }}>
+                  <circle cx="100" cy="100" r="95" fill="#CA8A04" stroke="#A61717" strokeWidth="6" />
+                </motion.g>
+
+                {/* H Character (Smaller, inside D's embrace) */}
+                <motion.g
+                  style={{ opacity: hOpacity }}
+                >
+                  {/* H - Left vertical stroke (Longer, slanted) */}
+                  <path
+                    d="M 72.6 73 L 63.4 153"
+                    fill="none"
+                    stroke="#A61717"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  {/* H - Right vertical stroke (Shorter than left) */}
+                  <path
+                    d="M 98.6 85 L 92.2 141"
+                    fill="none"
+                    stroke="#A61717"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                  {/* H - Crossbar */}
+                  <path
+                    d="M 68 113 L 95.4 113"
+                    fill="none"
+                    stroke="#A61717"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                  />
+                </motion.g>
+
+                {/* D Character — Big curve wrapping from bottom tip to above top tip */}
+                <motion.g style={{ opacity: dOpacity }}>
+                  <path
+                    d="M 63.4 153 C 165 180 165 45 71 55"
+                    fill="none"
+                    stroke="#A61717"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                  />
+                </motion.g>
+
+              </svg>
+
+              {/* Step Progress Bar (Minimalist) */}
+              <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                <div className="w-48 h-1 bg-stone-200 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-red-600"
+                    style={{ scaleX: smoothProgress, originX: 0 }}
+                  />
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
-            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="relative"
-          >
+          {/* Right Side: Text Content */}
+          <div className="relative h-[400px] md:h-[500px]">
+            {/* Step 1: Heritage */}
             <motion.div
-              style={{ rotate }}
-              className="aspect-[4/5] rounded-[3rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.15)] relative z-10"
+              style={{ opacity: text1Opacity, y: text1Y }}
+              className="absolute inset-0 flex flex-col justify-center"
             >
-              <Image
-                src="https://picsum.photos/seed/legacy/1000/1000"
-                alt="Our Legacy"
-                fill
-                className="object-cover transition-transform duration-[2s] hover:scale-105"
-                referrerPolicy="no-referrer"
-              />
-            </motion.div>
-
-            {/* Glassmorphism Floating Quote Card */}
-            <motion.div
-              initial={{ opacity: 0, x: -100, y: 50 }}
-              whileInView={{ opacity: 1, x: 0, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 1, type: "spring" }}
-              className="absolute -bottom-12 -left-12 p-10 liquid-glass rounded-3xl max-w-sm hidden md:block z-20"
-            >
-              <div className="text-red-600 text-5xl font-serif mb-4 leading-none opacity-20 group-hover:opacity-100 transition-opacity">“</div>
-              <p className="text-stone-800 font-serif italic text-2xl mb-8 leading-snug">
-                Spices are the soul of Indian cooking, and we treat them with the respect they deserve.
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-px bg-red-600" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-600">
-                  Founder, HD Foods
-                </span>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.2, duration: 0.7 }}
-              className="group"
-            >
-              <div className="h-80 rounded-[2.5rem] overflow-hidden mb-8 relative shadow-lg group-hover:shadow-2xl transition-all duration-700 group-hover:-translate-y-2">
-                <Image
-                  src={feature.image}
-                  alt={feature.title}
-                  fill
-                  className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <motion.h3
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                className="text-3xl font-serif font-bold text-stone-900 mb-5 group-hover:text-red-600 transition-colors"
-              >
-                {feature.title}
-              </motion.h3>
-              <p className="text-stone-500 leading-relaxed font-medium text-lg">
-                {feature.description}
+              <span className="text-red-600 font-black uppercase text-xs mb-4 block tracking-[0.3em]">
+                {storySteps[0].subtitle}
+              </span>
+              <h2 className="text-6xl md:text-8xl font-serif text-stone-900 leading-none mb-8">
+                {storySteps[0].title}
+              </h2>
+              <p className="text-2xl text-stone-600 leading-relaxed font-medium max-w-xl">
+                {storySteps[0].description}
               </p>
             </motion.div>
-          ))}
+
+            {/* Step 2: Dedication */}
+            <motion.div
+              style={{ opacity: text2Opacity, y: text2Y }}
+              className="absolute inset-0 flex flex-col justify-center"
+            >
+              <span className="text-red-600 font-black uppercase text-xs mb-4 block tracking-[0.3em]">
+                {storySteps[1].subtitle}
+              </span>
+              <h2 className="text-6xl md:text-8xl font-serif text-stone-900 leading-none mb-8">
+                {storySteps[1].title}
+              </h2>
+              <p className="text-2xl text-stone-600 leading-relaxed font-medium max-w-xl">
+                {storySteps[1].description}
+              </p>
+            </motion.div>
+
+            {/* Step 3: Legacy */}
+            <motion.div
+              style={{ opacity: text3Opacity, y: text3Y }}
+              className="absolute inset-0 flex flex-col justify-center"
+            >
+              <span className="text-red-600 font-black uppercase text-xs mb-4 block tracking-[0.3em]">
+                {storySteps[2].subtitle}
+              </span>
+              <h2 className="text-6xl md:text-8xl font-serif text-stone-900 leading-none mb-8">
+                {storySteps[2].title}
+              </h2>
+              <p className="text-2xl text-stone-600 leading-relaxed font-medium max-w-xl">
+                {storySteps[2].description}
+              </p>
+            </motion.div>
+          </div>
         </div>
       </div>
-
-      {/* Decorative background element */}
-      <div className="absolute top-1/2 -right-64 w-[500px] h-[500px] bg-orange-100 rounded-full blur-[120px] opacity-30 pointer-events-none" />
-    </section>
+    </div>
   );
 }
